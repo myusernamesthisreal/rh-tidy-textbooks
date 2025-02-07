@@ -3,14 +3,18 @@ import cv2
 import time
 import numpy as np
 import threading
-from PIL import ImageGrab
 import win32api, win32con
+import mss
 
+
+PHYSICS_TICK_TIME = 1 / 240  # 4.16ms
+FRAME_PROCESSING_LIMIT = 0.04  # 4ms
 # Global variables for multi-threading
 screenWidth, screenHeight = pyautogui.size()
 latest_frame = None
 frame_lock = threading.Lock()
 count = 0
+latest_frame_time = 0
 
 # Define the region of interest (ROI)
 startXCoord = int((screenWidth - screenWidth * 0.55) / 2)
@@ -26,21 +30,28 @@ def capture_screen():
     """
     Continuously captures the screen and updates latest_frame.
     """
-    global latest_frame
+    global latest_frame, latest_frame_time
 
     # Set dynamic ROI for book detection
-
-    while True:
-        roi_top = screenHeight - 117 * (count + 1) - 5
-        roi_bottom = screenHeight - 117 * count + 5
-        region = (startXCoord, roi_top, startXCoord + gameWidth, roi_bottom)
-        image = ImageGrab.grab(region)
-        grayImage = np.array(image.convert('L'))
-
-        with frame_lock:
-            latest_frame = grayImage
-
-        time.sleep(0.01)  # Small delay to avoid excessive CPU usage
+    with mss.mss() as sct:
+        while True:
+            start_time = time.perf_counter()
+            roi_top = screenHeight - 117 * (count + 1) - 5
+            roi_bottom = screenHeight - 117 * count + 5
+            region = (startXCoord, roi_top, startXCoord + gameWidth, roi_bottom)
+            image = sct.grab(region)
+            bgr = np.array(image)
+            grayImage = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
+            del image
+            with frame_lock:
+                latest_frame = grayImage
+                latest_frame_time = start_time
+            del bgr
+            del grayImage
+            capture_time = time.perf_counter() - start_time
+            if capture_time > FRAME_PROCESSING_LIMIT:
+                print(f"Capture took too long: {capture_time:.3f}s, skipping next frame.")
+            # time.sleep(0.0005)  # Capture at a fast rate
 
 def detect_books(gray_image):
     """
@@ -69,40 +80,42 @@ def process_game_logic():
     """
     Continuously processes game logic (detect books & click).
     """
-    global latest_frame
+    global latest_frame, latest_frame_time
     total = 0
-
     while True:
-
+        loop_start = time.perf_counter()
         # Get the latest frame (thread-safe)
         with frame_lock:
             frame = latest_frame.copy() if latest_frame is not None else None
+            frame_time = latest_frame_time
         loopStartTime = time.time()
+        if (loop_start - frame_time) > FRAME_PROCESSING_LIMIT:
+            print(f"⏩ Skipped old frame ({loop_start - frame_time:.6f}s delay).")
+            continue
         if frame is not None:
             book_positions = detect_books(frame)
+            processing_time = time.perf_counter() - loop_start
 
-            if book_positions:
+            if book_positions and processing_time < FRAME_PROCESSING_LIMIT:
                 book_x = book_positions[0]
 
                 # If books are aligned, click
                 if 400 < book_x < 450:
                     print("Loop Time: {:.3f}s".format(time.time() - loopStartTime))
-                    fast_click(1200, 1000)
+                    fast_click(1700, 1440)
                     print(total, "Click: Books Aligned", book_positions)
                     global count
                     count += 1
                     total += 1
                     with frame_lock:
-                        latest_frame = None
-                    time.sleep(0.2)
+                        del latest_frame
+                    time.sleep(0.3)
 
         if count >= 13:
             count = 1
             time.sleep(2)
 
 def main():
-
-
     # Activate and maximize the game window
     window = pyautogui.getWindowsWithTitle("Roblox")[0]
     window.activate()

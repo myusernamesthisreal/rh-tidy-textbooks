@@ -4,6 +4,7 @@ import time
 import numpy as np
 from PIL import ImageGrab
 import win32api, win32con
+import mss
 
 def fast_click(x, y):
     win32api.SetCursorPos((x, y))
@@ -28,9 +29,8 @@ def detect_books(gray_image):
         # save a debug image
         # cv2.rectangle(gray_image, (x, y), (x + w, y + h), (0, 255, 0), 2)
         # cv2.imwrite("debug2.png", gray_image)
-        # print(x, y, w, h, aspect_ratio)
         # Filtering based on size and shape
-        if 100 < w < 210 and 100 < h < 120 and 1.5 < aspect_ratio < 2.0:
+        if 100 < w < 210 and 100 < h < 120 and 1.2 < aspect_ratio < 2.0:
             book_positions.append((x, y, w, h))
 
     # Sort books from left to right based on x-coordinates
@@ -43,7 +43,7 @@ def detect_books(gray_image):
     return None
 
 def main():
-    startTime = time.time()
+    # startTime = time.time()
     screenWidth, screenHeight = pyautogui.size()
 
     # Activate and maximize the game window
@@ -57,35 +57,39 @@ def main():
 
     count = 0
     total = 0
-    while True:
-        loopStartTime = time.time()
-        roi_top = screenHeight - 117 * (count + 1) - 5
-        roi_bottom = screenHeight - 117 * count + 5
+    with mss.mss() as sct:
+        while True:
+            loopStartTime = time.time()
+            roi_top = screenHeight - 117 * (count + 1) - 5
+            roi_bottom = screenHeight - 117 * count + 5
 
-        # Capture only the region where the books appear
-        image = ImageGrab.grab((startXCoord, roi_top, startXCoord + gameWidth, roi_bottom))
-        grayImage = np.array(image.convert('L'))
+            # Capture only the region where the books appear
+            image = sct.grab({"top": roi_top, "left": startXCoord, "width": gameWidth, "height": roi_bottom - roi_top})
+            bgr = np.array(image)
+            grayImage = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
 
-        book_positions = detect_books(grayImage)
+            # convert to opencv2
 
-        if book_positions:
-            book_coords = book_positions
+            # cv2.imwrite("debug" + str(total) + ".png", grayImage)
+            book_positions = detect_books(grayImage)
+            print(total, book_positions)
+            if book_positions:
+                book_coords = book_positions
 
-            # If the books have similar x-coordinates, click
-            if book_coords[0] > 400 and book_coords[0] < 450:
-                fast_click(1200, 1000)
-                print(total, "Click: Books Aligned", book_coords)
-                # cv2.rectangle(grayImage, (book_coords[0], book_coords[1], book_coords[2], book_coords[3]), (0,0,255), 5)
-                # cv2.imwrite("debugSuccess" + str(total) + ".png", grayImage)
-                count += 1
-                total += 1
-                time.sleep(0.2)
+                # If the books have similar x-coordinates, click
+                if book_coords[0] > 400 and book_coords[0] < 450:
+                    fast_click(1920, 1440)
+                    print(total, "Click: Books Aligned", book_coords)
+                    # cv2.rectangle(grayImage, (book_coords[0], book_coords[1], book_coords[2], book_coords[3]), (0,0,255), 5)
+                    # cv2.imwrite("debugSuccess" + str(total) + ".png", grayImage)
+                    count += 1
+                    total += 1
+                    time.sleep(0.5)
 
-
-                print("Loop Time: {:.3f}s".format(time.time() - loopStartTime))
-        if count >= 13:
-            count = 1
-            time.sleep(2)
+                    print("Loop Time: {:.3f}s".format(time.time() - loopStartTime), total + 1)
+            if count >= 13:
+                count = 1
+                time.sleep(2)
 
 
 if __name__ == "__main__":
