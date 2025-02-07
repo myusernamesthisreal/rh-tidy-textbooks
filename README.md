@@ -15,6 +15,10 @@ This is a quick and dirty Python script that plays Royale High's Tidy Textbooks 
 - Run the script with `python3 tidy_textbooks.py`
 - Exit the script by pressing Ctrl + C or you may experience unwanted clicking...
 
+## Modifying the script
+
+This script was developed for a screen resolution of `2560x1600` on an Asus ROG Zephyrus G14 14 inch screen. You may need to tweak the `startXCoord` and `gameWidth` variables to fit your screen.
+
 ## Requirements
 
 - Python 3
