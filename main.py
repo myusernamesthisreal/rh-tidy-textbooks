@@ -2,7 +2,6 @@ import pyautogui
 import cv2
 import time
 import numpy
-import matplotlib.pyplot as plt
 import win32api, win32con
 import mss
 

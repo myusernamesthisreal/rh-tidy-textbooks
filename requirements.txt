@@ -1,0 +1,5 @@
+mss
+pyautogui
+numpy
+pywin32
+opencv-python
