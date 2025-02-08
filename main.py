@@ -40,7 +40,7 @@ def main():
     centerX = int(gameWidth / 2)
     lBound = gameWidth * 0.3 - 25
     rBound = gameWidth * 0.3 + 25
-    bookHeight = round(screenHeight * 0.07)
+    bookHeight = round(screenHeight * 0.074)
     print(startXCoord, gameWidth, centerX, lBound, rBound, bookHeight)
     count = 0
     total = 0
@@ -63,8 +63,8 @@ def main():
             grayImage = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
             result = cv2.matchTemplate(grayImage, template, cv2.TM_CCOEFF_NORMED)
             _, _, _, max_loc = cv2.minMaxLoc(result)
-            # cv2.rectangle(grayImage, max_loc, (max_loc[0] + template_width, max_loc[1] + template_height), (0, 255, 0), 2)
-            # cv2.imwrite("result" + str(total) + ".png", grayImage)
+            cv2.rectangle(grayImage, max_loc, (max_loc[0] + template_width, max_loc[1] + template_height), (0, 255, 0), 2)
+            cv2.imwrite("result" + str(total) + ".png", grayImage)
             if max_loc[0] > lBound and max_loc[0] < rBound and abs(max_loc[0] - prev_val) > 10:
                 print("Time: " + str(time.time() - loopStartTime), max_loc, startHeight, count, total)
                 fast_click(click_x, click_y)
