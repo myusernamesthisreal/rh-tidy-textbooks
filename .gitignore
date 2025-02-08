@@ -1,3 +1,6 @@
 image*.png
 result*.png
 venv/
+build/
+dist/
+*.spec
