@@ -77,7 +77,7 @@ def main():
                 # cv2.rectangle(grayImage, top_left, bottom_right, (0, 255, 0), 2)
                 # plt.imsave("result" + str(total) + ".png", grayImage, cmap="gray")
                 time.sleep(0.2)
-            cv2.imwrite("result" + str(total) + ".png", grayImage)
+            # cv2.imwrite("result" + str(total) + ".png", grayImage)
             # time.sleep(0.006)
             prev_val = max_loc[0]
             if count >= 13:
