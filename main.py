@@ -40,7 +40,7 @@ def main():
     centerX = int(gameWidth / 2)
     lBound = gameWidth * 0.3 - 25
     rBound = gameWidth * 0.3 + 25
-    bookHeight = round(117 * scaleY)
+    bookHeight = round(screenHeight * 0.07)
     print(startXCoord, gameWidth, centerX, lBound, rBound, bookHeight)
     count = 0
     total = 0
@@ -57,8 +57,8 @@ def main():
     with mss.mss() as sct:
         while True:
             loopStartTime = time.time()
-            startHeight = baseH + (screenHeight - (count + 1) * bookHeight) - 5
-            image = sct.grab({"top": startHeight, "left": startXCoord, "width": gameWidth, "height": bookHeight + 10})
+            startHeight = baseH + (screenHeight - (count + 1) * bookHeight) - 3
+            image = sct.grab({"top": startHeight, "left": startXCoord, "width": gameWidth, "height": bookHeight + 7})
             bgr = numpy.array(image)
             grayImage = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
             result = cv2.matchTemplate(grayImage, template, cv2.TM_CCOEFF_NORMED)
